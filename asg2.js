@@ -93,14 +93,14 @@ function addActionForHtmlUI(){
     // Button
     document.getElementById('green').onclick = function() { g_selectedColor = [0.0,1.0,0.0,1.0]; }; 
     document.getElementById('red').onclick = function() { g_selectedColor = [1.0,0.0,0.0,1.0]; };
-    document.getElementById('clearButton').onclick = function() { g_shapesList = []; renderAllShapes();}; 
+    document.getElementById('clearButton').onclick = function() { g_shapesList = []; renderScene();}; 
 
     // Buttons that change cursor shape directly
     document.getElementById('pointButton').onclick = function() { g_selectedType = POINT; }; 
     document.getElementById('triButton').onclick = function() { g_selectedType = TRIANGLE; };
     document.getElementById('circleButton').onclick = function() { g_selectedType = CIRCLE; };
 
-    document.getElementById('angleSlide').addEventListener('mousemove', function() { g_globalAngle = this.value; renderAllShapes();});
+    document.getElementById('angleSlide').addEventListener('mousemove', function() { g_globalAngle = this.value; renderScene();});
 
     // Sliders
     document.getElementById('redSlide').addEventListener('mouseup', function() { g_selectedColor[0] = this.value/100; });
@@ -123,61 +123,6 @@ function addActionForHtmlUI(){
 
 }
 
-function drawMountainLandscape() {
-    // Clear previous shapes
-    g_shapesList = [];
-
-    // Define colors for mountains, sun, and water
-    const mountainColors = [
-        [0.5, 0.5, 0.5, 1.0],  // Dark gray
-        [0.6, 0.6, 0.6, 1.0]   // Light gray
-    ];
-    const sunColor = [1.0, 0.9, 0.0, 1.0];  // Yellow
-    const waterColor = [0.0, 0.2, 0.8, 1.0];  // Blue
-
-    // Add mountains
-    for (let i = -2; i <= 2; i++) {
-        const baseX = i * 0.2; // Base X position for each mountain
-        const peakY = 0.1 + Math.abs(i) * 0.1;  // Peak Y position varies
-        let triangle1 = new Triangle();
-        let triangle2 = new Triangle();
-        triangle1.position = [baseX, -0.3, baseX + 0.1, peakY, baseX + 0.2, -0.3];
-        triangle2.position = [baseX + 0.1, -0.3, baseX + 0.2, peakY, baseX + 0.3, -0.3];
-        triangle1.color = mountainColors[i % 2];
-        triangle2.color = mountainColors[(i + 1) % 2];
-        g_shapesList.push(triangle1);
-        g_shapesList.push(triangle2);
-    }
-
-    // Add sun using 8 triangles forming a circle
-    for (let i = 0; i < 8; i++) {
-        const angle = Math.PI / 4 * i;
-        const nextAngle = Math.PI / 4 * (i + 1);
-        let triangle = new Triangle();
-        triangle.position = [
-            0, 0.6,  // Center of the sun
-            0.1 * Math.cos(angle), 0.6 + 0.1 * Math.sin(angle),  // Radius of sun
-            0.1 * Math.cos(nextAngle), 0.6 + 0.1 * Math.sin(nextAngle)
-        ];
-        triangle.color = sunColor;
-        g_shapesList.push(triangle);
-    }
-
-    // Add water
-    for (let i = -1; i <= 1; i++) {
-        const baseX = i * 0.3;
-        let triangle = new Triangle();
-        triangle.position = [baseX, -0.8, baseX + 0.3, -0.5, baseX + 0.6, -0.8];
-        triangle.color = waterColor;
-        g_shapesList.push(triangle);
-    }
-
-    // Render all shapes
-    renderAllShapes();
-}
-
-
-
 
 function main() {
     // set up canvas
@@ -190,15 +135,15 @@ function main() {
     addActionForHtmlUI();
 
     // Register function (event handler) to be called on a mouse press
-    canvas.onmousedown = click;
-    canvas.onmousemove = function(ev) { if(ev.buttons==1) {click(ev)} }; 
+    // canvas.onmousedown = click;
+    // canvas.onmousemove = function(ev) { if(ev.buttons==1) {click(ev)} }; 
 
     // Specify the color for clearing <canvas>
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
     // Clear <canvas>
     // gl.clear(gl.COLOR_BUFFER_BIT);
-    renderAllShapes();
+    renderScene();
 }
 
 
@@ -207,31 +152,31 @@ var g_shapesList = [];
 
 
 
-function click(ev) {
-    let [x, y] = convertCoordEventToWebGL(ev);  // extract the event click and return in in webgl coord
+// function click(ev) {
+//     let [x, y] = convertCoordEventToWebGL(ev);  // extract the event click and return in in webgl coord
 
-    let point;
-    if(g_selectedType == POINT){
-        point = new Point();
-    } else if((g_selectedType == TRIANGLE)){
-        point = new Triangle();
-    }
-    else {
-        point = new Circle();
-        point.sides = g_selectedSides;
-    }
-
-
+//     let point;
+//     if(g_selectedType == POINT){
+//         point = new Point();
+//     } else if((g_selectedType == TRIANGLE)){
+//         point = new Triangle();
+//     }
+//     else {
+//         point = new Circle();
+//         point.sides = g_selectedSides;
+//     }
 
 
-    point.position=[x,y];
-    point.color = g_selectedColor.slice();
-    point.size = g_selectedSize;
-    g_shapesList.push(point);
 
-    renderAllShapes();
 
-}
+//     point.position=[x,y];
+//     point.color = g_selectedColor.slice();
+//     point.size = g_selectedSize;
+//     g_shapesList.push(point);
+
+//     renderAllShapes();
+
+// }
 
 function convertCoordEventToWebGL(ev){
     var x = ev.clientX;                                         
@@ -243,7 +188,7 @@ function convertCoordEventToWebGL(ev){
     return ([x,y]);
 }
 
-function renderAllShapes(){
+function renderScene(){
     var startTime = performance.now();
 
     var gloablRotMat = new Matrix4().rotate(g_globalAngle,0,1,0);
