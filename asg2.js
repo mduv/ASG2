@@ -124,40 +124,90 @@ function convertCoordEventToWebGL(ev){
     return ([x,y]);
 }
 
+
+
+// function renderScene(){
+//     var startTime = performance.now();
+
+//     var gloablRotMat = new Matrix4().rotate(g_globalAngle,0,1,0);
+//     gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, gloablRotMat.elements);
+
+
+//     // Clear <canvas>
+//     gl.clear(gl.COLOR_BUFFER_BIT);
+
+//     // draw body cube
+//     var body = new Cube();
+//     body.color = [1.0, 0.0, 0.0, 1.0];
+//     body.matrix.translate(-.25,-.5,0.0);
+//     body.matrix.scale(0.5,1,-0.5);
+//     body.render();
+
+//     // draw a left arm
+//     var leftArm = new Cube();
+//     leftArm.color = [1, 1, 0, 1];
+//     leftArm.matrix.translate(.7,0,0.0);
+//     leftArm.matrix.rotate(45,0,0, 1);
+//     leftArm.matrix.scale(0.25,.7,.5);
+//     leftArm.render();
+
+//     // draw test box
+//     var box = new Cube();
+//     box.color = [1, 0, 1, 1];
+//     box.matrix.translate(0,0,-.5,0);
+//     box.matrix.rotate(-30,1,0,0);
+//     box.matrix.scale(.5,.5,.5);
+//     box.render();
+
+// }
+
 function renderScene(){
-    var startTime = performance.now();
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    var gloablRotMat = new Matrix4().rotate(g_globalAngle,0,1,0);
-    gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, gloablRotMat.elements);
+    var globalRotMat = new Matrix4().rotate(g_globalAngle, 0, 1, 0);
+    gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotMat.elements);
 
-
-    // Clear <canvas>
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
-    // draw body cube
+    // Body
     var body = new Cube();
-    body.color = [1.0, 0.0, 0.0, 1.0];
-    body.matrix.translate(-.25,-.5,0.0);
-    body.matrix.scale(0.5,1,-0.5);
+    body.color = [0.5, 0.5, 0.5, 1.0]; // Gray
+    body.matrix.translate(0, 0, 0);
+    body.matrix.scale(1, 0.5, 0.5); // Elongated cube for the body
     body.render();
 
-    // draw a left arm
-    var leftArm = new Cube();
-    leftArm.color = [1, 1, 0, 1];
-    leftArm.matrix.translate(.7,0,0.0);
-    leftArm.matrix.rotate(45,0,0, 1);
-    leftArm.matrix.scale(0.25,.7,.5);
-    leftArm.render();
+    // Head
+    var head = new Cube();
+    head.color = [0.5, 0.5, 0.5, 1.0];
+    head.matrix.translate(0.75, 0.2, 0); // Position the head at the front of the body
+    head.matrix.scale(0.3, 0.3, 0.3); // Smaller cube for the head
+    head.render();
 
-    // draw test box
-    var box = new Cube();
-    box.color = [1, 0, 1, 1];
-    box.matrix.translate(0,0,-.5,0);
-    box.matrix.rotate(-30,1,0,0);
-    box.matrix.scale(.5,.5,.5);
-    box.render();
+    // Legs
+    var leg1 = new Cube(), leg2 = new Cube(), leg3 = new Cube(), leg4 = new Cube();
+    var legs = [leg1, leg2, leg3, leg4];
+    legs.forEach((leg, index) => {
+        leg.color = [0.3, 0.2, 0.1, 1.0]; // Dark brown
+        leg.matrix.translate(index < 2 ? 0.4 : -0.4, -0.5, index % 2 == 0 ? 0.2 : -0.2); // Position legs
+        leg.matrix.scale(0.15, 0.4, 0.15); // Slim and tall segments for upper legs
+        leg.render();
 
+        // Lower leg (joint)
+        var lowerLeg = new Cube();
+        lowerLeg.color = [0.3, 0.2, 0.1, 1.0];
+        lowerLeg.matrix.setTranslate(leg.matrix.elements[12], leg.matrix.elements[13] - 0.3, leg.matrix.elements[14]); // Start from upper leg position
+        lowerLeg.matrix.rotate(-45, 1, 0, 0); // Simulate a knee joint by rotating lower leg
+        lowerLeg.matrix.scale(0.15, 0.3, 0.15); // Shorter segment for lower legs
+        lowerLeg.render();
+    });
+
+    // Tail (optional, for extended parts)
+    var tail = new Cube();
+    tail.color = [0.5, 0.5, 0.5, 1.0];
+    tail.matrix.translate(-0.8, 0, 0); // Attach to the back of the body
+    tail.matrix.scale(0.1, 0.1, 0.5); // Long and thin
+    tail.matrix.rotate(30, 0, 0, 1); // Slight upward curve
+    tail.render();
 }
+
 
 function sendTextToHTML(text, htmlID){ 
     var htmlElement = document.getElementById(htmlID);
