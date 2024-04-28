@@ -1,38 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8" />
-    <title>Change a point color</title>
+    <title>Assignment 2</title>
+    <style>
+        #xcamera_slider {
+            width: 300px;
+        }
+        #ycamera_slider {
+            width: 300px;
+        }
+        #zcamera_slider {
+            width: 300px;
+        }
+    </style>
 </head>
-
-<p>
-    <h1>Mohan Duvvuri
-        <br>
-        mduvvuri@ucsc.edu
-        <br>
-        Notes to Grader:
-        Awesomeness is the alpha slider. Graph drawing is of indian mythology chakra.</h1>
-</p>
 
 <body onload="main()">
     <canvas id="webgl" width="400" height="400">
         Please use a browser that supports "canvas"
     </canvas>
 
-    <p>
-        Camera Angle <input type="range" min="0" max="90" value="5" class="slider" id="angleSlide">
-    <p>
+    <h3>Mohan Duvvuri</h3>
+    <h3>mduvvuri@ucsc.edu</h3>
 
+    <h3>Notes to Grader:</h3>
+
+    <!-- Ear Slider -->
+    <label for="ear_slider">Ear Angle:</label>
+    <input type="range" id="ear_slider" min="-30" max="30" value="0">
+
+    <label for="on_ear">Ear Animation</label>
+    <button id="on_ear">ON</button>
+    <button id="off_ear">OFF</button>
+
+    <br><br>
+
+    <!-- Front Leg Slider -->
+    <label for="upper_leg_slider">Legs Angle:</label>
+    <input type="range" id="upper_leg_slider" min="-30" max="30" value="0">
+
+    <label for="on_legs">Legs Animation</label>
+    <button id="on_legs">ON</button>
+    <button id="off_legs">OFF</button>
+
+    <br><br>
+    <!-- Second Joint Front Leg Slider -->
+    <label for="lower_leg_slider">Toes Angle:</label>
+    <input type="range" id="lower_leg_slider" min="-30" max="30" value="0">
+    
+    <label for="on_toes">Toes Animation</label>
+    <button id="on_toes">ON</button>
+    <button id="off_toes">OFF</button>
+
+
+    <h4>Camera Sliders:</h4>
+
+    <label for="xcamera_slider">Camera Slider X</label>
+    <input id="xcamera_slider" type="range" min="0" max="359" step="1" value="30"/>
+
+    <p></p>
+
+    <label for="ycamera_slider">Camera Slider Y</label>
+    <input id="ycamera_slider" type="range" min="0" max="359" step="1" value="0"/>
+    
+    <p></p>
+    
     <script src="lib/webgl-utils.js"></script>
     <script src="lib/webgl-debug.js"></script>
-    <script type="text/javascript" src="lib/cuon-matrix-cse160.js"></script>
     <script src="lib/cuon-utils.js"></script>
-    <script src="Point.js"></script>
+    <script src="lib/cuon-matrix-cse160.js"></script>
     <script src="Triangle.js"></script>
     <script src="Circle.js"></script>
     <script src="Cube.js"></script>
     <script src="asg2.js"></script>
 </body>
-
 </html>
