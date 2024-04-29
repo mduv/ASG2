@@ -33,10 +33,6 @@ g_legsAnimation = false;
 g_toesAnimation = false;
 g_walkAnimation = false;
 
-// var stats = new Stats();
-// stats.showPanel(0); // 0: fps panel
-// document.body.appendChild(stats.domElement);
-
 
 // Global variables to track mouse state
 let isDragging = false;
@@ -50,14 +46,11 @@ let jumpSpeed = 0.05; // Speed of the jump
 let jumpMaxHeight = 0.5; // Maximum height of the jump
 
 function initMouseControl() {
-
     canvas.onmousedown = function (event) {
-
         if (event.shiftKey) {
             isJumping = true; // Start the jump animation
             return; // Prevent normal rotation logic when jumping
         }
-
         isDragging = true;
         lastMouseX = event.clientX;
         lastMouseY = event.clientY;
@@ -78,8 +71,8 @@ function initMouseControl() {
             var deltaX = x - lastMouseX;
             var deltaY = y - lastMouseY;
 
-            g_globalAngleX += deltaX * 0.1; // Adjust this factor to control rotation speed
-            g_globalAngleY += deltaY * 0.1; // Adjust this factor to control rotation speed
+            g_globalAngleX += deltaX * 0.1; 
+            g_globalAngleY += deltaY * 0.1; 
 
             lastMouseX = x;
             lastMouseY = y;
@@ -92,14 +85,12 @@ function initMouseControl() {
 function setupWebGL() {
     // Retrieve <canvas> element
     canvas = document.getElementById('webgl');
-
     // Get the rendering context for WebGL
     gl = canvas.getContext("webgl", { preseveDrawingBuffer: true }); // gl = getWebGLContext(canvas);
     if (!gl) {
         console.log('Failed to get the rendering context for WebGL');
         return;
     }
-
     gl.enable(gl.DEPTH_TEST);
 }
 
@@ -109,33 +100,28 @@ function connectVariablesToGLSL() {
         console.log('Failed to intialize shaders.');
         return;
     }
-
-    // // Get the storage location of a_Position
+    // Get the storage location of a_Position
     a_Position = gl.getAttribLocation(gl.program, 'a_Position');
     if (a_Position < 0) {
         console.log('Failed to get the storage location of a_Position');
         return;
     }
-
     // Get the storage location of u_FragColor
     u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
     if (!u_FragColor) {
         console.log('Failed to get the storage location of u_FragColor');
         return;
     }
-
     u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
     if (!u_ModelMatrix) {
         console.log('Failed to get u_ModelMatrix');
         return;
     }
-
     u_GlobalRotateMatrix = gl.getUniformLocation(gl.program, 'u_GlobalRotateMatrix');
     if (!u_GlobalRotateMatrix) {
         console.log('Failed to get u_GlobalRotateMatrix');
         return;
     }
-
     var identityM = new Matrix4();
     gl.uniformMatrix4fv(u_ModelMatrix, false, identityM.elements);
 
@@ -147,9 +133,8 @@ let g_globalAngleY = 0;
 
 // Set up actions for the HTML UI elements
 function addActionsForHTMLUI() {
-    // Slider Events
-    document.getElementById('xcamera_slider').addEventListener('mousemove', function () { g_globalAngleX = parseInt(this.value); renderScene(); });
-    document.getElementById('ycamera_slider').addEventListener('mousemove', function () { g_globalAngleY = parseInt(this.value); renderScene(); });
+    document.getElementById('x_slider').addEventListener('mousemove', function () { g_globalAngleX = parseInt(this.value); renderScene(); });
+    document.getElementById('y_slider').addEventListener('mousemove', function () { g_globalAngleY = parseInt(this.value); renderScene(); });
 
     document.getElementById('ear_slider').addEventListener('input', function () {
         g_earAngle = this.value; renderScene();
@@ -196,13 +181,9 @@ function tick() {
     requestAnimationFrame(tick);
 }
 
-
-
 let jumpPhase = 0; // Tracks the phase of the jump to synchronize animations
 
-
 function updateAnimationAngles() {
-
     if (isJumping) {
         // Calculate a bounce effect for the jump height
         jumpHeight = 0.5 * Math.abs(Math.sin(2 * Math.PI * jumpPhase)); // Sine wave for smooth jumping
@@ -245,7 +226,7 @@ function updateAnimationAngles() {
 
 
 function renderScene() {
-	
+
     var startTime = performance.now();
     // Calculate global rotation matrix
     var globalRotMat = new Matrix4();
@@ -258,13 +239,13 @@ function renderScene() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // Draw the rabbit-like creature
-    drawRabbit();
+    drawAnimal();
 
     var duration = performance.now() - startTime;
-    sendTextToHTML(" fps: " + Math.floor(10000/duration)/10, "numdot");
+    sendTextToHTML(" fps: " + Math.floor(10000 / duration) / 10, "numdot");
 }
 
-function drawRabbit() {
+function drawAnimal() {
     // Define body
     var body = new Cube();
     body.color = [1.0, 0.5, 0.0, 1.0];
@@ -346,11 +327,11 @@ function drawRabbit() {
 function sendTextToHTML(text, htmlID) {
     var htmlElm = document.getElementById(htmlID);
     if (!htmlElm) {
-      console.log("Failed to get " + htmlID + " from HTML");
-      return;
+        console.log("Failed to get " + htmlID + " from HTML");
+        return;
     }
     htmlElm.innerHTML = text;
-  }
+}
 
 
 function drawCylinder(numSegments, height, radius, color) {
