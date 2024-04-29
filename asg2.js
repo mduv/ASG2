@@ -1,4 +1,3 @@
-// ColoredPoint.js (c) 2012 matsuda
 // Vertex shader program
 var VSHADER_SOURCE =
     'attribute vec4 a_Position;\n' +
@@ -32,6 +31,63 @@ let g_lowerLegAngle = 0;
 g_earAnimation = false;
 g_legsAnimation = false;
 g_toesAnimation = false;
+g_walkAnimation = false;
+
+// var stats = new Stats();
+// stats.showPanel(0); // 0: fps panel
+// document.body.appendChild(stats.domElement);
+
+
+// Global variables to track mouse state
+let isDragging = false;
+let lastMouseX = 0;
+let lastMouseY = 0;
+
+// Add global variable to track the special animation state
+let isJumping = false;
+let jumpHeight = 0.0;
+let jumpSpeed = 0.05; // Speed of the jump
+let jumpMaxHeight = 0.5; // Maximum height of the jump
+
+function initMouseControl() {
+
+    canvas.onmousedown = function (event) {
+
+        if (event.shiftKey) {
+            isJumping = true; // Start the jump animation
+            return; // Prevent normal rotation logic when jumping
+        }
+
+        isDragging = true;
+        lastMouseX = event.clientX;
+        lastMouseY = event.clientY;
+    };
+
+    canvas.onmouseup = function (event) {
+        isDragging = false;
+    };
+
+    canvas.onmouseout = function (event) {
+        isDragging = false;
+    };
+
+    canvas.onmousemove = function (event) {
+        if (isDragging) {
+            var x = event.clientX;
+            var y = event.clientY;
+            var deltaX = x - lastMouseX;
+            var deltaY = y - lastMouseY;
+
+            g_globalAngleX += deltaX * 0.1; // Adjust this factor to control rotation speed
+            g_globalAngleY += deltaY * 0.1; // Adjust this factor to control rotation speed
+
+            lastMouseX = x;
+            lastMouseY = y;
+
+            renderScene();
+        }
+    };
+}
 
 function setupWebGL() {
     // Retrieve <canvas> element
@@ -95,24 +151,27 @@ function addActionsForHTMLUI() {
     document.getElementById('xcamera_slider').addEventListener('mousemove', function () { g_globalAngleX = parseInt(this.value); renderScene(); });
     document.getElementById('ycamera_slider').addEventListener('mousemove', function () { g_globalAngleY = parseInt(this.value); renderScene(); });
 
-    document.getElementById('ear_slider').addEventListener('input', function() {
+    document.getElementById('ear_slider').addEventListener('input', function () {
         g_earAngle = this.value; renderScene();
     });
 
-    document.getElementById('upper_leg_slider').addEventListener('input', function() {
+    document.getElementById('upper_leg_slider').addEventListener('input', function () {
         g_upperLegAngle = this.value; renderScene();
     });
 
-    document.getElementById('lower_leg_slider').addEventListener('input', function() {
+    document.getElementById('lower_leg_slider').addEventListener('input', function () {
         g_lowerLegAngle = this.value; renderScene();
     });
 
-    document.getElementById('on_ear').onclick = function() { g_earAnimation = true; };
-    document.getElementById('off_ear').onclick = function() { g_earAnimation = false; };
-    document.getElementById('on_legs').onclick = function() { g_legsAnimation = true; };
-    document.getElementById('off_legs').onclick = function() { g_legsAnimation = false; };
-    document.getElementById('on_toes').onclick = function() { g_toesAnimation = true; };
-    document.getElementById('off_toes').onclick = function() { g_toesAnimation = false; };     
+    document.getElementById('on_ear').onclick = function () { g_earAnimation = true; };
+    document.getElementById('off_ear').onclick = function () { g_earAnimation = false; };
+    document.getElementById('on_legs').onclick = function () { g_legsAnimation = true; };
+    document.getElementById('off_legs').onclick = function () { g_legsAnimation = false; };
+    document.getElementById('on_toes').onclick = function () { g_toesAnimation = true; };
+    document.getElementById('off_toes').onclick = function () { g_toesAnimation = false; };
+    document.getElementById('on_walk').onclick = function () { g_walkAnimation = true; };
+    document.getElementById('off_walk').onclick = function () { g_walkAnimation = false; g_legsAnimation = false; g_toesAnimation = false; g_earAnimation = false; };
+
 
 }
 
@@ -120,43 +179,79 @@ function main() {
     setupWebGL();
     connectVariablesToGLSL();
     addActionsForHTMLUI();
+    initMouseControl();
     gl.clearColor(0.3, 0.8, 0.2, 1.0);
     renderScene();
     requestAnimationFrame(tick);
 }
 
-var g_startTime = performance.now()/1000.0;
-var g_seconds = performance.now()/1000.0 - g_startTime;
+var g_startTime = performance.now() / 1000.0;
+var g_seconds = performance.now() / 1000.0 - g_startTime;
+let g_stats = 0;
+
 function tick() {
-  g_seconds = performance.now()/1000.0-g_startTime;
-  updateAnimationAngles();
-  renderScene();
-  requestAnimationFrame(tick);
+    g_seconds = performance.now() / 1000.0 - g_startTime;
+    updateAnimationAngles();
+    renderScene();
+    requestAnimationFrame(tick);
 }
 
-function updateAnimationAngles() {
-    if (g_earAnimation) {
-      g_earAngle = 45*Math.sin(g_seconds);
-    }
-  
-    if (g_legsAnimation) {
-        g_upperLegAngle = 45*Math.sin(g_seconds);
-    }
-  
-    if (g_toesAnimation) {
-        g_lowerLegAngle = 45*Math.sin(g_seconds);
-    }
-  
-  }
 
+
+let jumpPhase = 0; // Tracks the phase of the jump to synchronize animations
+
+
+function updateAnimationAngles() {
+
+    if (isJumping) {
+        // Calculate a bounce effect for the jump height
+        jumpHeight = 0.5 * Math.abs(Math.sin(2 * Math.PI * jumpPhase)); // Sine wave for smooth jumping
+        jumpPhase += 0.01; // Increment phase
+
+        // Reset jump when phase completes a cycle
+        if (jumpPhase > 1) {
+            isJumping = false;
+            jumpPhase = 0;
+        }
+
+        // Adjust leg angles for jumping
+        g_upperLegAngle = 20 * Math.sin(2 * Math.PI * jumpPhase);
+        g_lowerLegAngle = -20 * Math.sin(2 * Math.PI * jumpPhase);
+
+        // Ears and head can react to the jump
+        g_earAngle = 15 * Math.sin(2 * Math.PI * jumpPhase);
+    }
+
+    if (g_earAnimation) {
+        g_earAngle = 45 * Math.sin(3 * g_seconds);
+    }
+
+    if (g_legsAnimation) {
+        g_upperLegAngle = 30 * Math.sin(5 * g_seconds);
+    }
+
+    if (g_toesAnimation) {
+        g_lowerLegAngle = 45 * Math.sin(3 * g_seconds);
+    }
+
+    if (g_walkAnimation) {
+        g_earAnimation = true;
+        g_legsAnimation = true;
+        g_toesAnimation = true;
+    }
+
+}
 
 
 
 function renderScene() {
+	
+    var startTime = performance.now();
     // Calculate global rotation matrix
     var globalRotMat = new Matrix4();
     globalRotMat.rotate(g_globalAngleX, 0, 1, 0);
     globalRotMat.rotate(g_globalAngleY, 1, 0, 0);
+    globalRotMat.translate(0, jumpHeight, 0); // Apply the jump translation
     gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotMat.elements);
 
     // Clear the canvas
@@ -164,19 +259,22 @@ function renderScene() {
 
     // Draw the rabbit-like creature
     drawRabbit();
+
+    var duration = performance.now() - startTime;
+    sendTextToHTML(" fps: " + Math.floor(10000/duration)/10, "numdot");
 }
 
 function drawRabbit() {
     // Define body
     var body = new Cube();
-    body.color = [1.0, 1.0, 1.0, 1.0]; // White body
-    body.matrix.translate(0, 0, 0); // Hopping effect
-    body.matrix.scale(0.3, 0.2, 0.4); // Elongated body
+    body.color = [1.0, 0.5, 0.0, 1.0];
+    body.matrix.translate(-0.2, 0, 0);
+    body.matrix.scale(0.5, 0.2, 0.4);
     body.render();
 
     // Define head
     var head = new Cube();
-    head.color = [1.0, 1.0, 1.0, 1.0];
+    head.color = [1.0, 0.8, 0.6, 1.0];
     head.matrix.translate(0.2, 0.15, 0);
     head.matrix.scale(0.2, 0.2, 0.2);
     head.render();
@@ -184,7 +282,7 @@ function drawRabbit() {
     // Define ears using a loop for both ears
     for (var i = -1; i <= 1; i += 2) {
         var ear = new Cube();
-        ear.color = [1.0, 1.0, 1.0, 1.0];
+        ear.color = [1.0, 1.0, 0.0, 1.0];
         ear.matrix.translate(0.2, 0.35, i * 0.05);
         ear.matrix.rotate(g_earAngle, 0, 0, 1);
         ear.matrix.scale(0.05, 0.15, 0.05);
@@ -196,7 +294,7 @@ function drawRabbit() {
     front = true;
     for (var i = 0; i < legPositions.length; i++) {
         var upperLeg = new Cube();
-        upperLeg.color = [1.0, 1.0, 1.0, 1.0]; // White upper leg
+        upperLeg.color = [1.0, 0.5, 0.0, 1.0]; // White upper leg
         upperLeg.matrix.translate(...legPositions[i]);
         if (front) {
             upperLeg.matrix.rotate(g_upperLegAngle, 1, 0, 0); // Use global angle for the upper leg rotation
@@ -211,7 +309,7 @@ function drawRabbit() {
         upperLeg.render();
 
         var lowerLeg = new Cube();
-        lowerLeg.color = [1.0, 1.0, 1.0, 1.0]; // White lower leg
+        lowerLeg.color = [0.647, 0.165, 0.165, 1.0];
         // Start the lower leg's transformation relative to the upper leg
         lowerLeg.matrix = upperLegMatrix;
         lowerLeg.matrix.translate(0, -0.2, 0); // Move down to the end of the upper leg
@@ -220,10 +318,95 @@ function drawRabbit() {
         lowerLeg.render();
     }
 
-    // Define tail
-    var tail = new Cube();
-    tail.color = [1.0, 0.8, 0.6, 1.0];
-    tail.matrix.translate(-0.3, 0.05, 0);
-    tail.matrix.scale(0.1, 0.1, 0.1);
-    tail.render();
+
+    // Tail definition using a cylinder instead of a cube
+    var tailPosition = [-0.3, 0.05, 0]; // Tail position
+    var tailHeight = 0.1; // Tail cylinder height
+    var tailRadius = 0.05; // Tail cylinder radius
+    var tailColor = [1.0, 0.8, 0.6, 1.0]; // Tail color, matching the head
+
+    // Set matrix for tail positioning
+    var tailMatrix = new Matrix4();
+    tailMatrix.translate(...tailPosition);
+    tailMatrix.rotate(-90, 1, 0, 0); // Rotate to point tail up or along the desired axis
+
+    // Apply the tail matrix to the model matrix uniform
+    gl.uniformMatrix4fv(u_ModelMatrix, false, tailMatrix.elements);
+
+    // Draw cylinder tail
+    drawCylinder(20, tailHeight, tailRadius, tailColor);
+
+    // Reset matrix for other models
+    var identityM = new Matrix4();
+    gl.uniformMatrix4fv(u_ModelMatrix, false, identityM.elements);
+
+}
+
+// Debug stats
+function sendTextToHTML(text, htmlID) {
+    var htmlElm = document.getElementById(htmlID);
+    if (!htmlElm) {
+      console.log("Failed to get " + htmlID + " from HTML");
+      return;
+    }
+    htmlElm.innerHTML = text;
+  }
+
+
+function drawCylinder(numSegments, height, radius, color) {
+    let vertices = [];
+    let angleStep = (Math.PI * 2) / numSegments;
+
+    // Generate the top and bottom circle vertices
+    for (let i = 0; i <= numSegments; i++) {
+        let angle = i * angleStep;
+        let x = radius * Math.cos(angle);
+        let z = radius * Math.sin(angle);
+
+        // Top circle
+        vertices.push(x, height / 2, z); // top circle vertex
+        vertices.push(0, height / 2, 0); // top center vertex
+
+        // Bottom circle
+        vertices.push(x, -height / 2, z); // bottom circle vertex
+        vertices.push(0, -height / 2, 0); // bottom center vertex
+    }
+
+    // Side walls of the cylinder
+    for (let i = 0; i < numSegments; i++) {
+        let angle = i * angleStep;
+        let nextAngle = (i + 1) * angleStep;
+        let x1 = radius * Math.cos(angle);
+        let z1 = radius * Math.sin(angle);
+        let x2 = radius * Math.cos(nextAngle);
+        let z2 = radius * Math.sin(nextAngle);
+
+        // Each quad on the side consists of two triangles
+        vertices.push(x1, -height / 2, z1);
+        vertices.push(x2, -height / 2, z2);
+        vertices.push(x2, height / 2, z2);
+
+        vertices.push(x1, -height / 2, z1);
+        vertices.push(x2, height / 2, z2);
+        vertices.push(x1, height / 2, z1);
+    }
+
+    // Create buffer, bind data and configure WebGL to use it
+    let vertexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+    let a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+    gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_Position);
+
+    // Set the color uniform
+    let u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
+    gl.uniform4fv(u_FragColor, color);
+
+    // Draw the cylinder
+    // Draw top and bottom as fan, sides as individual triangles
+    for (let i = 0; i < vertices.length / 3; i += 3) {
+        gl.drawArrays(gl.TRIANGLES, i, 3);
+    }
 }
